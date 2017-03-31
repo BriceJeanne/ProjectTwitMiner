@@ -11,6 +11,7 @@ import twitter4j.auth.RequestToken;
 import twitter4j.conf.ConfigurationBuilder;
 
 import javax.swing.*;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ public class main {
     Twitter twitter;
     RequestToken requestToken;
 
+    FileWriter filewriter = null;
     // Requete
     Query request;
     QueryResult QResult;
@@ -32,6 +34,10 @@ public class main {
     Date date;
     // Cstd
 
+    static String COMMA_DELIMITER="," ;
+    static String NEW_LINE_SEPARATOR="\n";
+    static String  filename = "fichier.csv";
+    static String FILE_HEADER = "Date , @username , message";
 
     void Connect() {
         // Auth
@@ -54,20 +60,42 @@ public class main {
             Tweets = (ArrayList) QResult.getTweets(); // Séparation de chaque tweet
 
             // Traitement des tweets
-            PrintWriter w =  new PrintWriter("tweets.csv", "UTF-8");
+            filewriter = new FileWriter(filename);
+            filewriter.append(FILE_HEADER);
             for (int i = 0; i < Tweets.size(); i++) {
                 Status t = (Status)Tweets.get(i);
 
                 user = t.getUser().getName();
                 msg = t.getText();
-                pseudo =  t.getUser().getScreenName();
+                msg = msg.replace(',',';');
+                msg = msg.replace(' ', ';');
+                msg = msg.replace('\n', ';');
+                pseudo =  '@' + t.getUser().getScreenName();
                 date = t.getCreatedAt();
-                System.out.print("USER :" + user + "msg: "+ msg + "pseudo :" + pseudo + "date :"+date);
+                System.out.println("USER :" + user);
+                System.out.println("Msg: "+ msg );
+                System.out.println("Pseudo :" + pseudo);
+                System.out.println("Date :"+date);
+                filewriter.append(NEW_LINE_SEPARATOR);
+                filewriter.append(String.valueOf(date));
+                filewriter.append(COMMA_DELIMITER);
+                filewriter.append(pseudo);
+                filewriter.append(COMMA_DELIMITER);
+                filewriter.append(msg);
+                filewriter.append(COMMA_DELIMITER);
             }
         } catch (TwitterException e) {
             System.out.println("Erreur de connection : " + e);
-        } catch (IOException e) {
-            System.out.println(e);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                filewriter.flush();
+                filewriter.close();
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
