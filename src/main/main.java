@@ -69,6 +69,7 @@ public class main {
                 msg = t.getText();
                 msg = msg.replace(',',';');
                 msg = msg.replace(' ', ';');
+                msg = msg.replace('"',';');
                 msg = msg.replace('\n', ';');
                 pseudo =  '@' + t.getUser().getScreenName();
                 date = t.getCreatedAt();
