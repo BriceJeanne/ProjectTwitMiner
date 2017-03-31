@@ -63,6 +63,8 @@ public class main {
                 pseudo =  t.getUser().getScreenName();
                 date = t.getCreatedAt();
                 System.out.print("USER :" + user + "msg: "+ msg + "pseudo :" + pseudo + "date :"+date);
+
+                
             }
         } catch (TwitterException e) {
             System.out.println("Erreur de connection : " + e);
