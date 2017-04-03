@@ -1,9 +1,14 @@
 package phase1;
 
+import phase1.CSV.CSVToTrans;
+import phase1.CSV.CSVWriter;
+import twitter4j.Status;
 import twitter4j.TwitterException;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Brice on 31/03/2017.
@@ -11,61 +16,100 @@ import java.io.IOException;
 
 public class ProjectTwitMiner {
 
-    private static void loop(int tweets) {
-        while (true) {
-            TwitterMiner miner = new TwitterMiner();
-            String tag = "#Presidentielle2017";
+    private static final char DELIMITER = ';';
 
-            try {
-                for (int i = 0; i < 160; ++i)
-                    FilesWriter.writeCSV(miner.search(tag, tweets), "data", false);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (TwitterException e) {
-                e.printStackTrace();
-            }
+    private static void writeTweets(boolean loop, String filename) throws TwitterException, InterruptedException {
+        String tag = '#' + JOptionPane.showInputDialog("Entrez le tag à rechercher sur Twitter.");
 
-            System.out.println("Mined " + tweets + " tweets... Waiting 15 mins.");
-
-            try {
-                for (int i = 1; i <= 15; ++i) {
-                    Thread.sleep(60000);
-                    System.out.println(i + " min");
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            System.out.println("Wait is over ! Time to mine :)");
-        }
-    }
-
-    private static void once() {
         TwitterMiner miner = new TwitterMiner();
-        String tag = '#' + JOptionPane.showInputDialog("Entrez le tag à rechercher sur Twitter : ");
+        CSVWriter writer = new CSVWriter(filename, true);
 
-        try {
-            FilesWriter.writeCSV(miner.search(tag, 10), "test", true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (TwitterException e) {
-            e.printStackTrace();
+        while (true) {
+
+            /* Doing 180 requests at once before we have to wait 15 mins */
+            for (int i = 0; i < 10; ++i) {
+                List<String> listLines = new ArrayList<>();
+                List<Status> tweets = miner.search(tag, 150);
+
+                for (Status tweet : tweets) {
+                    String line = "";
+
+                    line += String.valueOf(tweet.getCreatedAt()) + DELIMITER;
+                    line += '@' + tweet.getUser().getScreenName() + DELIMITER;
+                    line += tweet.getUser().getLocation() + DELIMITER;
+
+                    String message = tweet.getText();
+                    message = message.replace(',', DELIMITER);
+                    message = message.replace(' ', DELIMITER);
+                    message = message.replace('\n', DELIMITER);
+                    message = message.replace('"', DELIMITER);
+
+                    line += message + DELIMITER;
+
+                    listLines.add(line);
+                }
+
+                writer.writeLines(listLines);
+            }
+
+            if (!loop) break;
+
+            System.out.println("~180 tweets request made, waiting 15 mins...");
+            Thread.sleep(600000); // 600000ms = 15 mins
         }
     }
 
-    private static void runApriori(String transPath, Integer freq) throws IOException {
-        String cmd = "apriori/linux/apriori";
+    private static void runApriori(boolean linux, String transPath, Integer freq) throws IOException {
+        List<String> commands = new ArrayList<>();
+
+        /* LINUX NOT WORKING YET */
+        if (linux) {
+            commands.add("/bin/bash");
+            commands.add("-c");
+            commands.add("./apriori/linux/apriori");
+            commands.add(transPath);
+            commands.add(freq.toString());
+            commands.add(transPath + ".out");
+        }
+
+        else {
+            commands.add(".\\apriori\\windows\\Apriori.exe");
+            commands.add(transPath);
+            commands.add(freq.toString());
+            commands.add(transPath + ".out");
+        }
+
         ProcessBuilder builder =
-                new ProcessBuilder("/bin/bash", "-c", cmd, transPath, freq.toString(), transPath + ".out");
+                new ProcessBuilder(commands);
+
+        builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+
+        Process process = builder.start();
     }
 
     public static void main(String[] args) {
-        //ProjectTwitMiner.loop(100);
+
+        String filename = JOptionPane.showInputDialog("Entrez le nom du fichier.");
 
         try {
-            runApriori("test2.trans", 3);
+            System.out.println("Getting tweets...");
+            writeTweets(false, filename);
+            System.out.println("Tweets recovered and wrote " + filename + ".csv");
+
+            System.out.println("Getting recurrent patterns..");
+            CSVToTrans csvtotrans = new CSVToTrans(filename);
+            csvtotrans.writeTrans();
+            System.out.println("Recurrent patterns wrote to " + filename + ".trans");
+
+            runApriori(false, filename + ".trans", 3);
+        } catch (TwitterException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 }
