@@ -1,4 +1,4 @@
-package main;
+package phase1;
 
 import twitter4j.TwitterException;
 
@@ -17,7 +17,8 @@ public class ProjectTwitMiner {
             String tag = "#Presidentielle2017";
 
             try {
-                CSVWriter.write(miner.search(tag, tweets), "test", false);
+                for (int i = 0; i < 160; ++i)
+                    FilesWriter.writeCSV(miner.search(tag, tweets), "data", false);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (TwitterException e) {
@@ -44,7 +45,7 @@ public class ProjectTwitMiner {
         String tag = '#' + JOptionPane.showInputDialog("Entrez le tag à rechercher sur Twitter : ");
 
         try {
-            CSVWriter.write(miner.search(tag, 10), "test", true);
+            FilesWriter.writeCSV(miner.search(tag, 10), "test", true);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (TwitterException e) {
@@ -52,7 +53,19 @@ public class ProjectTwitMiner {
         }
     }
 
+    private static void runApriori(String transPath, Integer freq) throws IOException {
+        String cmd = "apriori/linux/apriori";
+        ProcessBuilder builder =
+                new ProcessBuilder("/bin/bash", "-c", cmd, transPath, freq.toString(), transPath + ".out");
+    }
+
     public static void main(String[] args) {
-        ProjectTwitMiner.loop(100);
+        //ProjectTwitMiner.loop(100);
+
+        try {
+            runApriori("test2.trans", 3);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
