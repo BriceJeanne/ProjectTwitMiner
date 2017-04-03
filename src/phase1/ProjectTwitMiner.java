@@ -53,10 +53,18 @@ public class ProjectTwitMiner {
         }
     }
 
-    private static void runApriori(String transPath, Integer freq) throws IOException {
+    private static void runApriori(String transPath, Integer freq) throws IOException, InterruptedException {
         String cmd = "apriori/linux/apriori";
         ProcessBuilder builder =
                 new ProcessBuilder("/bin/bash", "-c", cmd, transPath, freq.toString(), transPath + ".out");
+
+        builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+
+        Process p = builder.start();
+
+        p.waitFor();
+
     }
 
     public static void main(String[] args) {
@@ -65,6 +73,8 @@ public class ProjectTwitMiner {
         try {
             runApriori("test2.trans", 3);
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
