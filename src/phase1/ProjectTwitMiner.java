@@ -104,7 +104,7 @@ public class ProjectTwitMiner {
             csvtotrans.writeTrans();
             System.out.println("Recurrent patterns wrote to " + filename + ".trans");
 
-            runApriori(true, "data.trans", 3);
+            runApriori(false, filename + ".trans", 3);
             System.out.println("Done ! Exiting..");
         } catch (TwitterException e) {
             e.printStackTrace();
