@@ -62,11 +62,12 @@ public class ProjectTwitMiner {
     private static void runApriori(boolean linux, String transPath, Integer freq) throws IOException {
         List<String> commands = new ArrayList<>();
 
-        /* LINUX NOT WORKING YET */
         if (linux) {
-            commands.add("/bin/bash");
-            commands.add("-c");
-            commands.add("./apriori/linux/apriori");
+            if (System.getProperty("os.arch").equals("i386"))
+                commands.add("./apriori/linux/32/apriori");
+            else
+                commands.add("./apriori/linux/64/apriori");
+
             commands.add(transPath);
             commands.add(freq.toString());
             commands.add(transPath + ".out");
@@ -93,6 +94,7 @@ public class ProjectTwitMiner {
         String filename = JOptionPane.showInputDialog("Entrez le nom du fichier.");
 
         try {
+
             System.out.println("Getting tweets...");
             writeTweets(false, filename);
             System.out.println("Tweets recovered and wrote " + filename + ".csv");
@@ -102,7 +104,8 @@ public class ProjectTwitMiner {
             csvtotrans.writeTrans();
             System.out.println("Recurrent patterns wrote to " + filename + ".trans");
 
-            runApriori(false, filename + ".trans", 3);
+            runApriori(true, "data.trans", 3);
+            System.out.println("Done ! Exiting..");
         } catch (TwitterException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

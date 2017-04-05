@@ -10,5 +10,6 @@
     <orderEntry type="library" name="twitter4j-core-4.0.4" level="project" />
     <orderEntry type="library" name="twitter4j-core" level="project" />
     <orderEntry type="library" name="twitter4j-core" level="project" />
+    <orderEntry type="library" name="twitter4j-core" level="project" />
   </component>
 </module>
