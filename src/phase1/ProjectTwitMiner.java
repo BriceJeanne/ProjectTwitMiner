@@ -19,37 +19,43 @@ public class ProjectTwitMiner {
     private static final char DELIMITER = ';';
 
     private static void writeTweets(boolean loop, String filename) throws TwitterException, InterruptedException {
-        String tag = '#' + JOptionPane.showInputDialog("Entrez le tag à rechercher sur Twitter.");
+        String tag = JOptionPane.showInputDialog("Entrez 3 tags à rechercher sur Twitter (séparés par des points-virgules).");
+
+        String[] tags = tag.split(";");
 
         TwitterMiner miner = new TwitterMiner();
         CSVWriter writer = new CSVWriter(filename, true);
 
         while (true) {
 
-            /* Doing 180 requests at once before we have to wait 15 mins */
-            for (int i = 0; i < 10; ++i) {
-                List<String> listLines = new ArrayList<>();
-                List<Status> tweets = miner.search(tag, 150);
+            /* Doing 30 requests/tag at once before we have to wait 15 mins */
+            /* Reduced requests number & tweets number to reduce duplicates */
+            for (String hashtag : tags) {
+                System.out.println(hashtag);
+                for (int i = 0; i < 30; ++i) {
+                    List<String> listLines = new ArrayList<>();
+                    List<Status> tweets = miner.search('#' + hashtag, 50);
 
-                for (Status tweet : tweets) {
-                    String line = "";
+                    for (Status tweet : tweets) {
+                        String line = "";
 
-                    line += String.valueOf(tweet.getCreatedAt()) + DELIMITER;
-                    line += '@' + tweet.getUser().getScreenName() + DELIMITER;
-                    line += tweet.getUser().getLocation() + DELIMITER;
+                        line += String.valueOf(tweet.getCreatedAt()) + DELIMITER;
+                        line += '@' + tweet.getUser().getScreenName() + DELIMITER;
+                        line += tweet.getUser().getLocation() + DELIMITER;
 
-                    String message = tweet.getText();
-                    message = message.replace(',', DELIMITER);
-                    message = message.replace(' ', DELIMITER);
-                    message = message.replace('\n', DELIMITER);
-                    message = message.replace('"', DELIMITER);
+                        String message = tweet.getText();
+                        message = message.replace(',', DELIMITER);
+                        message = message.replace(' ', DELIMITER);
+                        message = message.replace('\n', DELIMITER);
+                        message = message.replace('"', DELIMITER);
 
-                    line += message + DELIMITER;
+                        line += message + DELIMITER;
 
-                    listLines.add(line);
+                        listLines.add(line);
+                    }
+
+                    writer.writeLines(listLines);
                 }
-
-                writer.writeLines(listLines);
             }
 
             if (!loop) break;
@@ -87,6 +93,13 @@ public class ProjectTwitMiner {
         builder.redirectError(ProcessBuilder.Redirect.INHERIT);
 
         Process process = builder.start();
+
+        try {
+            process.waitFor();
+            process.destroy();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
