@@ -1,7 +1,7 @@
-package phase1;
-
+import phase0.TwitterMiner;
 import phase1.CSV.CSVToTrans;
 import phase1.CSV.CSVWriter;
+import phase2.RulesExtractor;
 import twitter4j.Status;
 import twitter4j.TwitterException;
 
@@ -19,9 +19,7 @@ public class ProjectTwitMiner {
     private static final char DELIMITER = ';';
 
     private static void writeTweets(boolean loop, String filename) throws TwitterException, InterruptedException {
-        String tag = JOptionPane.showInputDialog("Entrez 3 tags à rechercher sur Twitter (séparés par des points-virgules).");
-
-        String[] tags = tag.split(";");
+        String tag = '#' + JOptionPane.showInputDialog("Entrez un tag à rechercher sur Twitter.");
 
         TwitterMiner miner = new TwitterMiner();
         CSVWriter writer = new CSVWriter(filename, true);
@@ -30,32 +28,29 @@ public class ProjectTwitMiner {
 
             /* Doing 30 requests/tag at once before we have to wait 15 mins */
             /* Reduced requests number & tweets number to reduce duplicates */
-            for (String hashtag : tags) {
-                System.out.println(hashtag);
-                for (int i = 0; i < 30; ++i) {
-                    List<String> listLines = new ArrayList<>();
-                    List<Status> tweets = miner.search('#' + hashtag, 50);
+            for (int i = 0; i < 5; ++i) {
+                List<String> listLines = new ArrayList<>();
+                List<Status> tweets = miner.search(tag, 10);
 
-                    for (Status tweet : tweets) {
-                        String line = "";
+                for (Status tweet : tweets) {
+                    String line = "";
 
-                        line += String.valueOf(tweet.getCreatedAt()) + DELIMITER;
-                        line += '@' + tweet.getUser().getScreenName() + DELIMITER;
-                        line += tweet.getUser().getLocation() + DELIMITER;
+                    line += String.valueOf(tweet.getCreatedAt()) + DELIMITER;
+                    line += '@' + tweet.getUser().getScreenName() + DELIMITER;
+                    line += tweet.getUser().getLocation() + DELIMITER;
 
-                        String message = tweet.getText();
-                        message = message.replace(',', DELIMITER);
-                        message = message.replace(' ', DELIMITER);
-                        message = message.replace('\n', DELIMITER);
-                        message = message.replace('"', DELIMITER);
+                    String message = tweet.getText();
+                    message = message.replace(',', DELIMITER);
+                    message = message.replace(' ', DELIMITER);
+                    message = message.replace('\n', DELIMITER);
+                    message = message.replace('"', DELIMITER);
 
-                        line += message + DELIMITER;
+                    line += message + DELIMITER;
 
-                        listLines.add(line);
-                    }
-
-                    writer.writeLines(listLines);
+                    listLines.add(line);
                 }
+
+                writer.writeLines(listLines);
             }
 
             if (!loop) break;
@@ -108,17 +103,25 @@ public class ProjectTwitMiner {
 
         try {
 
+            /* PHASE 0 */
             System.out.println("Getting tweets...");
             writeTweets(false, filename);
             System.out.println("Tweets recovered and wrote " + filename + ".csv");
 
+            /* PHASE 1 */
             System.out.println("Getting recurrent patterns..");
             CSVToTrans csvtotrans = new CSVToTrans(filename);
             csvtotrans.writeTrans();
-            System.out.println("Recurrent patterns wrote to " + filename + ".trans");
+            System.out.println("Frequent itemsets wrote to " + filename + ".trans");
 
-            runApriori(false, filename + ".trans", 3);
-            System.out.println("Done ! Exiting..");
+            runApriori(false, filename + ".trans", 8);
+            System.out.println("Done !");
+
+            /* PHASE 2 */
+            System.out.println("Starting rules extraction...");
+            RulesExtractor extractor = new RulesExtractor(filename + ".trans.out", filename + ".rules.txt", 1.5);
+            extractor.extract();
+            System.out.println("Done ! Exiting...");
         } catch (TwitterException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

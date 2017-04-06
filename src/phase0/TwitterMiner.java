@@ -1,4 +1,4 @@
-package phase1;
+package phase0;
 
 import twitter4j.*;
 import twitter4j.conf.ConfigurationBuilder;
