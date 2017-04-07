@@ -24,7 +24,7 @@ public class ClearData {
             this.filename = filename;
             uselessWords = new ArrayList<>();
             logs = new ArrayList<>();
-            tempfile = new File("temp.csv");
+
 
             wordreader =
                     new BufferedReader(
@@ -44,11 +44,13 @@ public class ClearData {
     }
     public void removeUselessWords(){
         try {
+            tempfile = new File("temp.csv");
+            File oldfile =  new File (filename +".csv");
             filereader = new BufferedReader(
                     new InputStreamReader(
                             new FileInputStream(filename+".csv"), StandardCharsets.UTF_8));
 
-            writer = new OutputStreamWriter( // tempfile
+            writer = new OutputStreamWriter(
                     new FileOutputStream(tempfile, false), StandardCharsets.UTF_8);
 
             String line;
@@ -70,7 +72,7 @@ public class ClearData {
             }
 
             writer.close();
-
+            oldfile.delete();
             tempfile.renameTo(new File(filename+".csv"));
 
         } catch(IOException e) {
@@ -84,6 +86,7 @@ public class ClearData {
                     new InputStreamReader(
                             new FileInputStream(filename +".rules.csv"), StandardCharsets.UTF_8));
 
+            File oldfile =  new File (filename +".rules.csv");
             tempfile = new File("temp.rules.csv");
             writer = new OutputStreamWriter(
                     new FileOutputStream(tempfile, false), StandardCharsets.UTF_8);
@@ -102,6 +105,7 @@ public class ClearData {
                     writer.flush();
                 }
             }
+            oldfile.delete();
             tempfile.renameTo(new File(filename+".rules.csv"));
 
         } catch (FileNotFoundException e) {
