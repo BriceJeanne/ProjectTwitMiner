@@ -65,7 +65,7 @@ public class ProjectTwitMiner {
         List<String> commands = new ArrayList<>();
 
         String OS = System.getProperty("os.name").toLowerCase();
-        boolean linux = OS.indexOf("nix") < 0;
+        boolean linux = OS.indexOf("nix") > 0;
 
         if (linux) {
             if (System.getProperty("os.arch").equals("i386"))
@@ -102,7 +102,7 @@ public class ProjectTwitMiner {
     }
 
     public static void main(String[] args) {
-
+        System.out.println(System.getProperty("os.name"));
         try {
             String filename;
 
@@ -122,7 +122,7 @@ public class ProjectTwitMiner {
 
                 int returnVal = chooser.showOpenDialog(null);
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    filename = chooser.getSelectedFile().getName();
+                    filename = chooser.getSelectedFile().getAbsolutePath();
                     filename = filename.substring(0, filename.lastIndexOf("."));
                 } else return;
 
@@ -135,8 +135,7 @@ public class ProjectTwitMiner {
             }
 
             /* PHASE 3 (1) */
-
-            ClearData cd =  new ClearData(filename);
+            ClearData cd = new ClearData(filename);
             System.out.println("Clearing tweets...");
             cd.removeUselessWords();
             System.out.println("Done !");
@@ -145,7 +144,9 @@ public class ProjectTwitMiner {
             System.out.println("Getting recurrent patterns..");
             CSVToTrans csvtotrans = new CSVToTrans(filename);
             csvtotrans.writeTrans();
+            csvtotrans.writeDictionary();
             System.out.println("Frequent itemsets wrote to " + filename + ".trans");
+            System.out.println("Dictionary wrote to dictionary.txt");
 
             int aprioriFreq = Integer.parseInt(JOptionPane.showInputDialog("Entrez la fréquence minimale de l'algorithme apriori."));
 
@@ -167,7 +168,7 @@ public class ProjectTwitMiner {
             System.out.println("Done !");
 
             /* PHASE 4 */
-            //GUI.start(filename);
+            GUI.start(filename);
         } catch (TwitterException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

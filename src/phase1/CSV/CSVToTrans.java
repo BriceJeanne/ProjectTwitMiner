@@ -72,4 +72,23 @@ public class CSVToTrans {
             }
         }
     }
+
+    public void writeDictionary() {
+        try {
+            BufferedWriter writer =
+                    new BufferedWriter(
+                        new OutputStreamWriter(
+                            new FileOutputStream("dictionary.txt"), StandardCharsets.UTF_8));
+
+            for (String word : dictionnary) {
+                if (word.isEmpty()) continue;
+
+                writer.write(word);
+                writer.newLine();
+                writer.flush();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
