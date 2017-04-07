@@ -2,6 +2,7 @@ import phase0.TwitterMiner;
 import phase1.CSV.CSVToTrans;
 import phase1.CSV.CSVWriter;
 import phase2.RulesExtractor;
+import phase3.ClearData;
 import phase4.GUI;
 import twitter4j.Status;
 import twitter4j.TwitterException;
@@ -64,7 +65,7 @@ public class ProjectTwitMiner {
         List<String> commands = new ArrayList<>();
 
         String OS = System.getProperty("os.name").toLowerCase();
-        boolean linux = OS.indexOf("nix") >= 0;
+        boolean linux = OS.indexOf("nix") < 0;
 
         if (linux) {
             if (System.getProperty("os.arch").equals("i386"))
@@ -133,6 +134,13 @@ public class ProjectTwitMiner {
                 System.out.println("Tweets recovered and wrote " + filename + ".csv");
             }
 
+            /* PHASE 3 (1) */
+
+            ClearData cd =  new ClearData(filename);
+            System.out.println("Clearing tweets...");
+            cd.removeUselessWords();
+            System.out.println("Done !");
+
             /* PHASE 1 */
             System.out.println("Getting recurrent patterns..");
             CSVToTrans csvtotrans = new CSVToTrans(filename);
@@ -153,8 +161,13 @@ public class ProjectTwitMiner {
             extractor.extract();
             System.out.println("Done !");
 
+            /* PHASE 3 (2) */
+            System.out.println("Clearing rules...");
+            cd.filterRules();
+            System.out.println("Done !");
+
             /* PHASE 4 */
-            GUI.start(filename);
+            //GUI.start(filename);
         } catch (TwitterException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
