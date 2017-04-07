@@ -81,9 +81,11 @@ public class RulesExtractor {
                         /*
                             On enregistre la règle trouvée
                          */
-                        System.out.println("Règle d'association trouvée.");
                         itemset.removeAll(subitemset);
-                        writeRule(itemset, subitemset, confiance, freq);
+                        if (!itemset.isEmpty() && !subitemset.isEmpty()) {
+                            System.out.println("Règle d'association trouvée.");
+                            writeRule(itemset, subitemset, confiance, freq);
+                        }
                     }
                 }
             }
@@ -97,13 +99,13 @@ public class RulesExtractor {
             rule += item + ",";
         rule = rule.substring(0, rule.length() - 1); // on retire la dernière virgule
 
-        rule += "} -> {";
+        rule += "};{";
 
         for (String item : itemset)
             rule += item + ",";
         rule = rule.substring(0, rule.length() - 1); // on retire la dernière virgule
 
-        rule += "} : Conf = " + conf + ", Freq = " + freq;
+        rule += "};" + conf + ';' + freq + ';';
 
         try {
             writer.write(rule);

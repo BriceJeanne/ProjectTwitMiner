@@ -2,10 +2,12 @@ import phase0.TwitterMiner;
 import phase1.CSV.CSVToTrans;
 import phase1.CSV.CSVWriter;
 import phase2.RulesExtractor;
+import phase4.GUI;
 import twitter4j.Status;
 import twitter4j.TwitterException;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,18 +21,16 @@ public class ProjectTwitMiner {
     private static final char DELIMITER = ';';
 
     private static void writeTweets(boolean loop, String filename) throws TwitterException, InterruptedException {
-        String tag = '#' + JOptionPane.showInputDialog("Entrez un tag à rechercher sur Twitter.");
-
         TwitterMiner miner = new TwitterMiner();
         CSVWriter writer = new CSVWriter(filename, true);
 
         while (true) {
 
-            /* Doing 30 requests/tag at once before we have to wait 15 mins */
-            /* Reduced requests number & tweets number to reduce duplicates */
-            for (int i = 0; i < 5; ++i) {
+            /* Doing 1 request to get 100 tweets */
+            /* Reduced requests to reduce duplicates */
+            for (int i = 0; i < 1; ++i) {
                 List<String> listLines = new ArrayList<>();
-                List<Status> tweets = miner.search(tag, 10);
+                List<Status> tweets = miner.search('#' + filename, 100);
 
                 for (Status tweet : tweets) {
                     String line = "";
@@ -60,8 +60,11 @@ public class ProjectTwitMiner {
         }
     }
 
-    private static void runApriori(boolean linux, String transPath, Integer freq) throws IOException {
+    private static void runApriori(String transPath, Integer freq) throws IOException {
         List<String> commands = new ArrayList<>();
+
+        String OS = System.getProperty("os.name").toLowerCase();
+        boolean linux = OS.indexOf("nix") >= 0;
 
         if (linux) {
             if (System.getProperty("os.arch").equals("i386"))
@@ -99,14 +102,36 @@ public class ProjectTwitMiner {
 
     public static void main(String[] args) {
 
-        String filename = JOptionPane.showInputDialog("Entrez le nom du fichier.");
-
         try {
+            String filename;
 
-            /* PHASE 0 */
-            System.out.println("Getting tweets...");
-            writeTweets(false, filename);
-            System.out.println("Tweets recovered and wrote " + filename + ".csv");
+            int choice = JOptionPane.showOptionDialog(null,
+                    "Do you want to open a .csv file containing your tweets ?",
+                    "Open file",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null, null, null);
+
+            if (choice == JOptionPane.YES_OPTION) {
+                JFileChooser chooser = new JFileChooser();
+                FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                        "CSV files", "csv");
+
+                chooser.setFileFilter(filter);
+
+                int returnVal = chooser.showOpenDialog(null);
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    filename = chooser.getSelectedFile().getName();
+                    filename = filename.substring(0, filename.lastIndexOf("."));
+                } else return;
+
+            } else {
+                /* PHASE 0 */
+                System.out.println("Getting tweets...");
+                filename = JOptionPane.showInputDialog("Entrez le tag à rechercher.");
+                writeTweets(false, filename);
+                System.out.println("Tweets recovered and wrote " + filename + ".csv");
+            }
 
             /* PHASE 1 */
             System.out.println("Getting recurrent patterns..");
@@ -114,14 +139,22 @@ public class ProjectTwitMiner {
             csvtotrans.writeTrans();
             System.out.println("Frequent itemsets wrote to " + filename + ".trans");
 
-            runApriori(false, filename + ".trans", 8);
+            int aprioriFreq = Integer.parseInt(JOptionPane.showInputDialog("Entrez la fréquence minimale de l'algorithme apriori."));
+
+            runApriori(filename + ".trans", aprioriFreq);
             System.out.println("Done !");
 
             /* PHASE 2 */
             System.out.println("Starting rules extraction...");
-            RulesExtractor extractor = new RulesExtractor(filename + ".trans.out", filename + ".rules.txt", 1.5);
+
+            double minConf = Double.parseDouble(JOptionPane.showInputDialog("Entrez la confiance minimale pour les règles d'associations. (double)"));
+
+            RulesExtractor extractor = new RulesExtractor(filename + ".trans.out", filename + ".rules.csv", minConf);
             extractor.extract();
-            System.out.println("Done ! Exiting...");
+            System.out.println("Done !");
+
+            /* PHASE 4 */
+            GUI.start(filename);
         } catch (TwitterException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
