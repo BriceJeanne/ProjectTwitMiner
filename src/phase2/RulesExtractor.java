@@ -98,7 +98,8 @@ public class RulesExtractor {
 
                 if (itemset.containsAll(subitemset)) {
                     double subFreq = getFrequency(subitem) / globalFreq;
-                    double confiance = (freq / subFreq);
+                    double confiance = (subFreq / freq);
+
                     if (confiance >= minConf) {
                         /*
                             On enregistre la règle trouvée

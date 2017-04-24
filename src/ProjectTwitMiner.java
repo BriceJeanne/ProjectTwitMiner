@@ -29,7 +29,7 @@ public class ProjectTwitMiner {
 
             /* Doing 1 request to get 100 tweets */
             /* Reduced requests to reduce duplicates */
-            for (int i = 0; i < 1; ++i) {
+            for (int i = 0; i < 2; ++i) {
                 List<String> listLines = new ArrayList<>();
                 List<Status> tweets = miner.search('#' + filename, 100);
 
@@ -65,7 +65,7 @@ public class ProjectTwitMiner {
         List<String> commands = new ArrayList<>();
 
         String OS = System.getProperty("os.name").toLowerCase();
-        boolean linux = OS.indexOf("nix") > 0;
+        boolean linux = OS.indexOf("dows") <= 0;
 
         if (linux) {
             if (System.getProperty("os.arch").equals("i386"))
